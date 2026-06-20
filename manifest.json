@@ -2,14 +2,19 @@
   "name": "不正经修仙模拟器",
   "short_name": "不正经修仙",
   "description": "一个不太正经的修仙江湖",
-  "start_url": "index.html",
+  "start_url": "/index.html",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0b0f17",
   "theme_color": "#0b0f17",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "scope": "/",
+  "categories": ["games", "entertainment"],
+  "prefer_related_applications": false,
   "icons": [
     {
-      "src": "icon-512.png",
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
