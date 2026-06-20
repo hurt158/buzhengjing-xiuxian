@@ -1,0 +1,250 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>不正经的修仙模拟器</title>
+  <link rel="stylesheet" href="style.css?v=15">
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+<!-- ⚠️ 文件打开模式警告（仅在 file:// 协议下显示） -->
+<div id="fileProtocolWarning" style="display:none;background:#c0392b;color:#fff;text-align:center;padding:20px;font-size:1.2rem;position:fixed;top:0;left:0;width:100%;z-index:999999;">
+  ❌ 无法加载游戏 — 请使用本地服务器启动<br>
+  <span style="font-size:0.9rem;">关闭此页面 → 双击 <b>start-server.bat</b> → 浏览器自动打开</span>
+</div>
+<script>
+  // 检测 file:// 协议并显示警告（Electron 桌面版除外）
+  if (location.protocol === 'file:' && !window.isElectron) {
+    document.getElementById('fileProtocolWarning').style.display = 'block';
+    document.title = '[错误] 请用服务器启动 - 不正经修仙';
+  } else {
+    document.getElementById('fileProtocolWarning').style.display = 'none';
+  }
+</script>
+
+<!-- ===== 启动封面 ===== -->
+<div class="splash-screen" id="splashScreen">
+  <div class="splash-bg"></div>
+  <div class="splash-content">
+    <div class="splash-icon">☯</div>
+    <h1 class="splash-title">不 正 经 修 仙</h1>
+    <p class="splash-sub">一个不太正经的修仙江湖</p>
+    <div class="splash-divider"></div>
+    <div class="splash-btns">
+      <button class="splash-btn" id="startGameBtn" onclick="handleStartGame()">◇ 开 始 游 戏 ◇</button>
+      <button class="splash-btn" id="continueGameBtn" onclick="showSaveManager('load')">◇ 继 续 游 戏 ◇</button>
+      <button class="splash-btn" id="lifeRecordBtn" onclick="showLifeRecords()">◇ 生 平 记 录 ◇</button>
+      <button class="splash-btn" id="settingsBtn" onclick="showSettings()">◇ 设 置 ◇</button>
+    </div>
+    <p class="splash-footer">「加油少年，早日飞升」</p>
+  </div>
+</div>
+
+<!-- ===== 游戏容器 ===== -->
+<div class="game-container" id="app">
+  <!-- 顶栏 -->
+  <header class="game-header">
+    <h1>不 正 经 修 仙</h1>
+    <div class="header-right">
+      <span class="talent-badge" id="talentDisplay" title="点击查看天赋详情">✨ 天赋未觉醒</span>
+      <span class="talent-badge" id="battleModeBtn" title="切换战斗模式" style="cursor:pointer;">⚡自动</span>
+      <button class="help-btn" id="helpBtn" title="帮助">?</button><button class="panel-toggle-btn" id="panelToggleBtn" title="展开面板">☰</button>
+    </div>
+  </header>
+
+  <!-- 主体 -->
+  <div class="main-layout">
+    <!-- 左侧面板 -->
+    <aside class="left-panel" id="leftPanel">
+      <!-- 境界 -->
+      <div class="realm-display">
+        <span id="realmIcon">⚪</span>
+        <span class="realm-name" id="realmName">凡人</span>
+        <span class="realm-layer" id="realmLayer"></span>
+        <div class="break-info" id="breakInfo"></div>
+        <div class="title-display" id="titleDisplay" style="font-size:0.6rem;color:#d4a574;margin-top:2px;cursor:pointer;" title="点击查看称号" onclick="showTitles();">🏅 <span id="titleName">无称号</span></div>
+      </div>
+
+      <!-- 寿元 -->
+      <div class="stat-card">
+        <h3>✦ 寿元 ✦</h3>
+        <div class="stat-row"><span class="stat-label">年龄</span><span class="stat-value" id="ageText">?</span></div>
+        <div class="stat-row"><span class="stat-label">寿限</span><span class="stat-value" id="maxAgeText">?</span></div>
+        <div class="stat-row"><span class="stat-label">状态</span><span class="stat-value highlight" id="lifespanStatus" style="font-size:0.65rem;">-</span></div>
+      </div>
+
+      <!-- 体魄 -->
+      <div class="stat-card">
+        <h3>✦ 体魄 ✦</h3>
+        <div class="stat-row"><span class="stat-label">类型</span><span class="stat-value highlight" id="physiqueText" style="cursor:pointer;" title="点击查看体魄详情">凡体</span></div>
+      </div>
+
+      <!-- 修为 -->
+      <div class="stat-card">
+        <h3>✦ 修为 ✦</h3>
+        <div class="progress-bar-bg"><div class="progress-bar-fill exp-fill" id="expBar" style="width:0%"></div></div>
+        <div class="stat-row"><span class="stat-label">经验</span><span class="stat-value" id="expText">0/100</span></div>
+      </div>
+
+      <!-- 状态 -->
+      <div class="stat-card">
+        <h3>✦ 状态 ✦</h3>
+        <div class="stat-row"><span class="stat-label">生命</span><span class="stat-value" id="hpText">?</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill hp-fill" id="hpBar" style="width:100%"></div></div>
+        <div class="stat-row"><span class="stat-label">灵力</span><span class="stat-value" id="mpText">?</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill mp-fill" id="mpBar" style="width:100%"></div></div>
+        <div class="stat-row"><span class="stat-label">攻击</span><span class="stat-value highlight" id="atkText">?</span></div>
+        <div class="stat-row"><span class="stat-label">防御</span><span class="stat-value" id="defText">?</span></div>
+        <div class="stat-row"><span class="stat-label">灵石</span><span class="stat-value highlight" id="spiritStone">0 💎</span></div>
+        <div class="stat-row"><span class="stat-label">心魔</span><span class="stat-value highlight" id="innerDemonText" style="font-size:0.65rem;">心神安宁</span></div>
+      </div>
+
+      <!-- 装备 -->
+      <div class="stat-card">
+        <h3>✦ 装备 ✦</h3>
+        <div class="equipment-slot"><span class="slot-label">🗡️武器</span><span class="slot-value empty" id="weaponSlot">空</span></div>
+        <div class="equipment-slot"><span class="slot-label">🛡️防具</span><span class="slot-value empty" id="armorSlot">空</span></div>
+        <div class="equipment-slot"><span class="slot-label">💍饰品</span><span class="slot-value empty" id="accessorySlot">空</span></div>
+        <div class="equipment-slot" style="color:var(--accent);"><span class="slot-label">🔮法器</span><span class="slot-value empty" id="artifactSlot">空</span></div>
+      </div>
+
+      <!-- 命格 -->
+      <div class="stat-card">
+        <h3>✦ 命格 ✦</h3>
+        <div class="stat-row"><span class="stat-label">🧠聪慧</span><span class="stat-value highlight" id="fateInt">5</span></div>
+        <div class="stat-row"><span class="stat-label">💪体魄</span><span class="stat-value highlight" id="fatePhy">5</span></div>
+        <div class="stat-row"><span class="stat-label">🍀气运</span><span class="stat-value highlight" id="fateLuck">5</span></div>
+        <div class="stat-row"><span class="stat-label">🧘定力</span><span class="stat-value highlight" id="fateFocus">5</span></div>
+      </div>
+
+      <!-- 灵根 -->
+      <div class="stat-card" id="spiritualRootCard">
+        <h3>✦ 灵根 ✦</h3>
+        <div class="stat-row"><span class="stat-label">金</span><span class="stat-value highlight" id="rootMetal">-</span></div>
+        <div class="stat-row"><span class="stat-label">木</span><span class="stat-value highlight" id="rootWood">-</span></div>
+        <div class="stat-row"><span class="stat-label">水</span><span class="stat-value highlight" id="rootWater">-</span></div>
+        <div class="stat-row"><span class="stat-label">火</span><span class="stat-value highlight" id="rootFire">-</span></div>
+        <div class="stat-row"><span class="stat-label">土</span><span class="stat-value highlight" id="rootEarth">-</span></div>
+      </div>
+
+      <!-- 道友 -->
+      <div class="stat-card">
+        <h3>✦ 道友 ✦</h3>
+        <div id="companionList" style="font-size:0.65rem;color:#8899aa;">暂无道友</div>
+      </div>
+
+      <!-- 灵兽 -->
+      <div class="stat-card">
+        <h3>✦ 灵兽 ✦</h3>
+        <div id="petList" style="font-size:0.65rem;color:#8899aa;">暂无灵兽</div>
+      </div>
+    </aside>
+
+    <!-- 右侧面板 -->
+    <div class="right-panel">
+      <!-- 日志标签 -->
+      <div class="log-tabs" id="logTabs">
+        <button class="log-tab active" data-filter="all">全部</button>
+        <button class="log-tab" data-filter="combat">⚔️战斗</button>
+        <button class="log-tab" data-filter="special">✨奇遇</button>
+        <button class="log-tab" data-filter="system">📜系统</button>
+        <button class="log-tab" id="clearLogBtn">🗑️清空</button>
+        <button class="log-tab" onclick="handleCommand('地图')">🗺️地图</button>
+        <button class="log-tab" onclick="showSettings()">⚙️设置</button>
+      </div>
+
+      <!-- 日志区域 -->
+      <div class="log-area" id="logArea"></div>
+      <div class="hint-text" id="hintText">💡 试试点击 🧘修炼 开始你的修仙之旅</div>
+
+      <!-- 快速按钮 -->
+      <div class="quick-actions" id="quickActions">
+        <!-- 第1页 · 修行 -->
+        <button class="quick-btn" data-cmd="修炼" data-core="true" data-page="1">🧘修炼</button>
+        <button class="quick-btn" data-cmd="突破" data-core="true" data-page="1">⬆️突破</button>
+        <button class="quick-btn" data-cmd="探索" data-core="true" data-page="1">🗺️探索</button>
+        <button class="quick-btn" data-cmd="战斗" data-core="true" data-page="1">⚔️寻敌</button>
+        <button class="quick-btn" data-cmd="状态" data-core="true" data-page="1">📋状态</button>
+        <button class="quick-btn" data-cmd="休息" data-core="true" data-page="1">🛌休息</button>
+        <button class="quick-btn" data-cmd="背包" data-core="true" data-page="1">🎒背包</button>
+        <!-- 第2页 · 社交 -->
+        <button class="quick-btn" data-cmd="道友" data-page="2">👥道友</button>
+        <button class="quick-btn" data-cmd="灵兽" data-page="2">🐾灵兽</button>
+        <button class="quick-btn" data-cmd="商城" data-page="2">🛒商城</button>
+        <button class="quick-btn" data-cmd="装备" data-page="2">⚙️装备</button>
+        <button class="quick-btn" data-cmd="存" data-page="2">💾存</button>
+        <button class="quick-btn" data-cmd="读" data-page="2">📂读</button>
+        <button class="quick-btn" data-cmd="成就" data-page="3">🏆成就</button>
+        <button class="quick-btn" data-cmd="称号" data-page="2">🏅称号</button>
+        <!-- 第3页 · 进阶 -->
+        <button class="quick-btn" data-cmd="炼丹" data-page="3">🧪炼丹</button>
+        <button class="quick-btn" data-cmd="炼器" data-page="3">⚒️炼器</button>
+        <button class="quick-btn" data-cmd="秘境" data-page="1">🏰秘境</button>
+        <button class="quick-btn" data-cmd="悬赏" data-page="3">📜悬赏</button>
+        <button class="quick-btn" data-cmd="图鉴" data-page="3">📚图鉴</button>
+        <button class="quick-btn" data-cmd="洞府" data-page="3">🏠洞府</button>
+        <button class="quick-btn" data-cmd="BOSS" data-page="3" style="color:#c0392b;">BOSS</button>
+        <button class="quick-btn" data-cmd="灵田" data-page="3">🌾灵田</button>
+        <button class="quick-btn" data-cmd="功法" data-page="3">📖功法</button>
+        <button class="quick-btn" data-cmd="心魔塔" data-page="2">🏯心魔塔</button>
+        <button class="quick-btn" data-cmd="宗门" data-page="1">🏛️宗门</button>
+        <button class="quick-btn" data-cmd="新游戏" data-page="2">新游戏</button>
+      </div>
+      
+      <!-- 页码圆点（仅手机端显示） -->
+      <div class="page-dots" id="pageDots">
+        <span class="dot active" data-page="1"></span>
+        <span class="dot" data-page="2"></span>
+        <span class="dot" data-page="3"></span>
+      </div>
+
+      <!-- 输入区 -->
+      <div class="input-area">
+        <input type="text" id="commandInput" placeholder="输入指令或点击上方按钮..." autocomplete="off">
+        <button id="submitCmd">施令</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 欢迎弹窗 ===== -->
+<div class="modal-overlay intro-modal visible" id="introModal">
+  <div class="modal-content">
+    <h2>🌟 不正经修仙 🌟</h2>
+    <p>这是一个非常“正经”的修仙世界，在这里你可以体会到修仙途中的人生百态。</p>
+    <p>加油少年，助你早日得道成仙。</p>
+    <p class="sub">点击按钮操作，或输入指令。商城有延寿丹、定龄丹卖哦。</p>
+   <button class="modal-btn" id="introCloseBtn">让我试试咸淡</button>
+  </div>
+</div>
+
+<!-- ===== 通用模态框容器 ===== -->
+<div class="modal-overlay hidden" id="genericModal">
+  <div class="modal-content">
+    <h2 id="modalTitle">标题</h2>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+
+  <!-- ===== 外部 JS（按依赖顺序加载） ===== -->
+  <script src="js/02-data.js?v=6"></script>
+  <script src="js/03-state.js?v=9"></script>
+  <script src="js/04-combat.js?v=11"></script>
+  <script src="js/05-actions.js?v=7"></script>
+  <script src="js/06-events.js?v=6"></script>
+  <script src="js/07-ui.js?v=45"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+  </script>
+<!-- ===== 音频播放器 ===== -->
+<audio id="bgmMenu" loop preload="auto" style="display:none;"></audio>
+<audio id="bgmGame" loop preload="auto" style="display:none;"></audio>
+
+</body>
+</html>
