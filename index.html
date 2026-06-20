@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>不正经的修仙模拟器</title>
   <link rel="stylesheet" href="style.css?v=15">
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
 <!-- ⚠️ 文件打开模式警告（仅在 file:// 协议下显示） -->
@@ -235,6 +238,11 @@
   <script src="js/05-actions.js?v=7"></script>
   <script src="js/06-events.js?v=6"></script>
   <script src="js/07-ui.js?v=45"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+  </script>
 <!-- ===== 音频播放器 ===== -->
 <audio id="bgmMenu" loop preload="auto" style="display:none;"></audio>
 <audio id="bgmGame" loop preload="auto" style="display:none;"></audio>
