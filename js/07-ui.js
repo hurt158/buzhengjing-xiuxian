@@ -188,6 +188,18 @@ function showSettings() {
   showModal('⚙️ 设置', html);
 }
 
+/** 感谢名单 */
+function showThanks() {
+  var html = '<div style="text-align:center;font-size:0.85rem;line-height:2;">';
+  html += '<p>🙏 感谢龙族同人群群主提供技术帮助和思路</p>';
+  html += '<p>💰 感谢龙族同人群运气与贫穷之王赞助88元</p>';
+  html += '<div class="modal-btn-group" style="margin-top:12px;">';
+  html += '<button class="modal-btn" onclick="closeModal();">收下这份谢意</button>';
+  html += '</div>';
+  html += '</div>';
+  showModal('📜 感谢名单', html);
+}
+
 /** 返回标题画面 */
 function returnToTitle() {
   stopBgm();
@@ -236,6 +248,7 @@ function saveAudioSettings() {
 }
 
 window.showSettings = showSettings;
+window.showThanks = showThanks;
 window.toggleMusic = toggleMusic;
 window.setVolume = setVolume;
 window.playBgm = playBgm;
